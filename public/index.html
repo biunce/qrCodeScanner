@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Event Portal | Sampark</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --border-color: #e2e8f0;
+            --primary: #ea580c; /* Saffron Orange */
+            --primary-hover: #c2410c;
+            --secondary: #1e293b; /* Slate Navy */
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --accent-glow: rgba(234, 88, 12, 0.12);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(234, 88, 12, 0.05) 0px, transparent 40%),
+                radial-gradient(at 100% 100%, rgba(30, 41, 59, 0.02) 0px, transparent 40%);
+            background-attachment: fixed;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 1.5rem;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 680px;
+            text-align: center;
+        }
+
+        /* Sampark Brand Header Logo Styling */
+        .brand-logo-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 2rem;
+        }
+
+        .brand-logo-icon {
+            width: 44px;
+            height: 44px;
+            background: linear-gradient(135deg, #f97316, #ea580c);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.5rem;
+            font-weight: 800;
+            box-shadow: 0 4px 12px rgba(234, 88, 12, 0.25);
+        }
+
+        .brand-name {
+            font-size: 2rem;
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            color: var(--secondary);
+        }
+
+        .brand-dot {
+            color: var(--primary);
+        }
+
+        .subtitle {
+            font-size: 1.05rem;
+            color: var(--text-secondary);
+            margin-top: -1.25rem;
+            margin-bottom: 3rem;
+            font-weight: 500;
+        }
+
+        /* Choice Grid */
+        .portal-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+        }
+
+        @media (min-width: 600px) {
+            .portal-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        .portal-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 2.25rem 1.75rem;
+            text-decoration: none;
+            color: inherit;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            box-shadow: 0 10px 25px -5px rgba(30, 41, 59, 0.03), 0 20px 30px -10px rgba(30, 41, 59, 0.03);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .portal-card:hover {
+            transform: translateY(-4px);
+            border-color: var(--primary);
+            box-shadow: 0 15px 30px -5px rgba(234, 88, 12, 0.1), 0 20px 40px -10px rgba(30, 41, 59, 0.05);
+        }
+
+        .icon-wrapper {
+            width: 60px;
+            height: 60px;
+            border-radius: 16px;
+            background: #fff7ed;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.75rem;
+            margin-bottom: 1.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .portal-card:hover .icon-wrapper {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 4px 12px rgba(234, 88, 12, 0.2);
+        }
+
+        .portal-card h2 {
+            font-size: 1.25rem;
+            font-weight: 800;
+            color: var(--secondary);
+            margin-bottom: 0.75rem;
+            letter-spacing: -0.02em;
+        }
+
+        .portal-card p {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+            font-weight: 500;
+            flex-grow: 1;
+            margin-bottom: 1.5rem;
+        }
+
+        .action-arrow {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--primary);
+            transition: gap 0.2s ease;
+        }
+
+        .portal-card:hover .action-arrow {
+            gap: 8px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <!-- Brand Header Logo -->
+        <div class="brand-logo-container">
+            <div class="brand-logo-icon">S</div>
+            <div class="brand-name">Sampark<span class="brand-dot">.</span></div>
+        </div>
+        
+        <p class="subtitle">Sabha Event Portal & Registration Desk</p>
+
+        <!-- Grid Options -->
+        <div class="portal-grid">
+            <!-- Option 1: Register -->
+            <a href="/register.html" class="portal-card">
+                <div class="icon-wrapper">
+                    <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M19 7.5v3m0 0v3m0-3h3m-3 0h-3m-9-4.5a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-3.115 11.238L1 18.75V21h11.25v-2.25L9.115 14.238c-.378-.85-1.425-1.2-2.23-1.2H3.77c-.805 0-1.852.35-2.23 1.2z"></path>
+                    </svg>
+                </div>
+                <h2>Attendee Registration</h2>
+                <p>Register for the event to secure your VIP Entry Pass and download your personal QR code.</p>
+                <div class="action-arrow">
+                    <span>Go to Registration</span>
+                    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"></path>
+                    </svg>
+                </div>
+            </a>
+
+            <!-- Option 2: Check-In -->
+            <a href="/checkin.html" class="portal-card">
+                <div class="icon-wrapper" style="background: #eff6ff; color: #3b82f6;">
+                    <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 013.75 9.375v-4.5zM3.75 14.625c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5a1.125 1.125 0 01-1.125-1.125v-4.5zM13.5 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0113.5 9.375v-4.5zM17 14v2m-3-3H9.375a1.125 1.125 0 00-1.125 1.125v3.5c0 .621.504 1.125 1.125 1.125h3.5A1.125 1.125 0 0014 19.375V17M17 21h.008v.008H17V21zm3 0h.008v.008H20V21zm-3-3h.008v.008H17V18zm3-3h.008v.008H20V15z"></path>
+                    </svg>
+                </div>
+                <h2>Staff Check-In Desk</h2>
+                <p>Open the camera scanning dashboard to scan attendee codes, check-in guests, and monitor entries.</p>
+                <div class="action-arrow" style="color: #3b82f6;">
+                    <span>Go to Check-In Station</span>
+                    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"></path>
+                    </svg>
+                </div>
+            </a>
+        </div>
+    </div>
+
+</body>
+</html>
