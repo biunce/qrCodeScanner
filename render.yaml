@@ -9,6 +9,6 @@ services:
     startCommand: node server.js
     envVars:
       - key: DATABASE_URL
-        placeholder: "Paste your Neon PostgreSQL connection string here"
+        sync: false
       - key: PORT
         value: 3000
