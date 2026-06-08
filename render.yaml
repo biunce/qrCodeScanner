@@ -1,0 +1,14 @@
+# Render Blueprint Specification
+# See https://render.com/docs/blueprints for details
+services:
+  - type: web
+    name: sampark-qr-scanner
+    env: node
+    plan: free
+    buildCommand: npm install
+    startCommand: node server.js
+    envVars:
+      - key: DATABASE_URL
+        placeholder: "Paste your Neon PostgreSQL connection string here"
+      - key: PORT
+        value: 3000
