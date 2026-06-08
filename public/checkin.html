@@ -1,0 +1,1098 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Event Staff Check-In Scanner | Sampark</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Html5-QRCode Library -->
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <style>
+        :root {
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --border-color: #e2e8f0;
+            --primary: #ea580c; /* Saffron Orange */
+            --primary-hover: #c2410c;
+            --secondary: #1e293b; /* Slate Navy */
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --success: #10b981;
+            --error: #ef4444;
+            --warning: #f59e0b;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(234, 88, 12, 0.05) 0px, transparent 40%),
+                radial-gradient(at 100% 0%, rgba(30, 41, 59, 0.02) 0px, transparent 40%);
+            background-attachment: fixed;
+            color: var(--text-primary);
+            min-height: 100vh;
+            padding: 1.5rem;
+            display: flex;
+            justify-content: center;
+        }
+
+        .dashboard {
+            width: 100%;
+            max-width: 1000px;
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+        }
+
+        @media (min-width: 768px) {
+            .dashboard {
+                grid-template-columns: 1.1fr 0.9fr;
+            }
+        }
+
+        /* Brand Header Logo */
+        .brand-logo-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            grid-column: 1 / -1;
+            margin-bottom: 0.5rem;
+        }
+
+        .brand-logo-icon {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, #f97316, #ea580c);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.1rem;
+            font-weight: 800;
+            box-shadow: 0 4px 10px rgba(234, 88, 12, 0.2);
+        }
+
+        .brand-name {
+            font-size: 1.35rem;
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            color: var(--secondary);
+        }
+
+        .brand-dot {
+            color: var(--primary);
+        }
+
+        .panel {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 1.5rem;
+            box-shadow: 0 10px 30px -5px rgba(30, 41, 59, 0.05);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .panel-header {
+            margin-bottom: 1.25rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 0.75rem;
+        }
+
+        .panel-title {
+            font-size: 1.05rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--secondary);
+        }
+
+        .badge {
+            background: #fff7ed;
+            color: #c2410c;
+            border: 1px solid #ffedd5;
+            padding: 3px 8px;
+            border-radius: 99px;
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+
+        /* Camera Scanner */
+        .scanner-container {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 1;
+            max-width: 400px;
+            margin: 0 auto;
+            border-radius: 16px;
+            overflow: hidden;
+            background: #0f172a;
+            border: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: inset 0 2px 8px rgba(0,0,0,0.2);
+        }
+
+        #reader {
+            width: 100%;
+            height: 100%;
+        }
+
+        #reader img { display: none !important; }
+        #reader button { display: none !important; }
+
+        /* Scanning Visual Helper Overlay */
+        .scanner-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .scan-frame {
+            width: 65%;
+            height: 65%;
+            border: 2px solid rgba(255, 255, 255, 0.25);
+            border-radius: 12px;
+            position: relative;
+            box-shadow: 0 0 0 2000px rgba(15, 23, 42, 0.5); /* Dim viewport edges */
+        }
+
+        .scan-frame::before, .scan-frame::after {
+            content: '';
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            border-color: var(--primary);
+            border-style: solid;
+        }
+
+        .scan-frame::before {
+            top: -2px;
+            left: -2px;
+            border-width: 4px 0 0 4px;
+            border-radius: 6px 0 0 0;
+        }
+
+        .scan-frame::after {
+            bottom: -2px;
+            right: -2px;
+            border-width: 0 4px 4px 0;
+            border-radius: 0 0 6px 0;
+        }
+
+        .laser {
+            position: absolute;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, var(--primary), transparent);
+            box-shadow: 0 0 8px var(--primary);
+            animation: sweep 2.5s infinite linear;
+            top: 0;
+        }
+
+        @keyframes sweep {
+            0% { top: 0%; }
+            50% { top: 100%; }
+            100% { top: 0%; }
+        }
+
+        /* Response Visual Overlays */
+        .feedback-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 20;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 1.5rem;
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            animation: fadeIn 0.25s ease-out forwards;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .feedback-icon-container {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1rem;
+            box-shadow: 0 6px 16px rgba(0,0,0,0.06);
+            font-size: 1.75rem;
+            font-weight: 700;
+        }
+
+        .feedback-title {
+            font-size: 1.35rem;
+            font-weight: 800;
+            margin-bottom: 0.35rem;
+        }
+
+        .feedback-desc {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-bottom: 1.25rem;
+            max-width: 280px;
+            line-height: 1.4;
+        }
+
+        /* Success Theme Overlay */
+        .status-success {
+            background: rgba(240, 253, 250, 0.95);
+        }
+        .status-success .feedback-icon-container {
+            background: #d1fae5;
+            border: 2px solid var(--success);
+            color: var(--success);
+        }
+        .status-success .feedback-title {
+            color: #065f46;
+        }
+        .status-success .feedback-desc {
+            color: #047857;
+        }
+
+        /* Warning (Duplicate) Theme Overlay */
+        .status-warning {
+            background: rgba(254, 253, 237, 0.96);
+        }
+        .status-warning .feedback-icon-container {
+            background: #fef3c7;
+            border: 2px solid var(--warning);
+            color: var(--warning);
+        }
+        .status-warning .feedback-title {
+            color: #92400e;
+        }
+        .status-warning .feedback-desc {
+            color: #b45309;
+        }
+
+        /* Error Theme Overlay */
+        .status-error {
+            background: rgba(254, 242, 242, 0.96);
+        }
+        .status-error .feedback-icon-container {
+            background: #fee2e2;
+            border: 2px solid var(--error);
+            color: var(--error);
+        }
+        .status-error .feedback-title {
+            color: #991b1b;
+        }
+        .status-error .feedback-desc {
+            color: #b91c1c;
+        }
+
+        /* SVG Checkmark draw animations */
+        .checkmark-svg {
+            width: 36px;
+            height: 36px;
+            stroke-width: 4;
+            stroke: currentColor;
+            stroke-miterlimit: 10;
+            fill: none;
+        }
+        .checkmark-circle {
+            stroke-dasharray: 166;
+            stroke-dashoffset: 166;
+            stroke-width: 4;
+            stroke: currentColor;
+            fill: none;
+            animation: stroke 0.5s cubic-bezier(0.65, 0, 0.45, 1) forwards;
+        }
+        .checkmark-check {
+            transform-origin: 50% 50%;
+            stroke-dasharray: 48;
+            stroke-dashoffset: 48;
+            animation: stroke 0.3s cubic-bezier(0.65, 0, 0.45, 1) 0.5s forwards;
+        }
+        
+        @keyframes stroke {
+            100% { stroke-dashoffset: 0; }
+        }
+
+        /* Scanned attendee data card on duplicate warning */
+        .attendee-preview-card {
+            background: #ffffff;
+            border: 1px solid #fcd34d;
+            border-radius: 10px;
+            padding: 10px 14px;
+            margin-bottom: 1.25rem;
+            text-align: left;
+            width: 100%;
+            max-width: 320px;
+            box-shadow: 0 4px 12px rgba(180, 83, 9, 0.05);
+        }
+
+        .attendee-preview-label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            font-weight: 800;
+            color: #b45309;
+            letter-spacing: 0.05em;
+            margin-bottom: 4px;
+        }
+
+        .attendee-preview-name {
+            font-weight: 800;
+            font-size: 0.95rem;
+            color: var(--secondary);
+        }
+
+        .attendee-preview-email {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+        }
+
+        .attendee-preview-time {
+            font-size: 0.75rem;
+            color: #b45309;
+            font-weight: 600;
+        }
+
+        /* Action control groupings */
+        .control-group {
+            margin-top: 1rem;
+        }
+
+        .label-text {
+            font-size: 0.75rem;
+            font-weight: 800;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            margin-bottom: 0.4rem;
+            display: block;
+        }
+
+        select {
+            width: 100%;
+            padding: 11px;
+            background: #ffffff;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 0.85rem;
+            font-weight: 500;
+            outline: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        select:focus {
+            border-color: var(--primary);
+        }
+
+        .btn {
+            padding: 11px 18px;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: white;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #f97316, #ea580c);
+            box-shadow: 0 4px 10px rgba(234, 88, 12, 0.2);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 14px rgba(234, 88, 12, 0.3);
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1px solid #cbd5e1;
+            color: var(--text-primary);
+        }
+
+        .btn-outline:hover {
+            background: #f1f5f9;
+            border-color: #94a3b8;
+        }
+
+        .btn-danger {
+            background: #dc2626;
+            box-shadow: 0 4px 10px rgba(220, 38, 38, 0.15);
+        }
+
+        .btn-danger:hover {
+            background: #b91c1c;
+            transform: translateY(-1px);
+        }
+
+        /* Permissions View Screen */
+        .setup-screen {
+            text-align: center;
+            padding: 3rem 1.5rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            flex-grow: 1;
+        }
+
+        .setup-icon {
+            font-size: 2.75rem;
+            color: var(--primary);
+            margin-bottom: 1.25rem;
+            animation: pulse 2s infinite alternate;
+        }
+
+        @keyframes pulse {
+            from { transform: scale(1); opacity: 0.85; }
+            to { transform: scale(1.04); opacity: 1; }
+        }
+
+        /* History sidebar panel */
+        .history-list {
+            margin-top: 0.5rem;
+            overflow-y: auto;
+            max-height: 380px;
+            flex-grow: 1;
+        }
+
+        .history-list::-webkit-scrollbar {
+            width: 5px;
+        }
+        .history-list::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .history-list::-webkit-scrollbar-thumb {
+            background: rgba(30, 41, 59, 0.15);
+            border-radius: 99px;
+        }
+
+        .history-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 12px;
+            border-bottom: 1px solid #f1f5f9;
+            border-radius: 8px;
+            margin-bottom: 6px;
+            background: #fafafa;
+            transition: background 0.2s ease;
+        }
+
+        .history-row:hover {
+            background: #f1f5f9;
+        }
+
+        .history-info {
+            display: flex;
+            flex-direction: column;
+            gap: 1px;
+            max-width: 65%;
+        }
+
+        .history-name {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--secondary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .history-email {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            font-weight: 500;
+        }
+
+        .history-time {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            font-weight: 600;
+        }
+
+        .history-status {
+            padding: 3px 6px;
+            border-radius: 4px;
+            font-size: 0.65rem;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .status-badge-success {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .status-badge-override {
+            background: #ffedd5;
+            color: #9a3412;
+            border: 1px solid #fed7aa;
+        }
+
+        .status-badge-duplicate {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .status-badge-invalid {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .empty-state {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            text-align: center;
+            padding: 3rem 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            font-weight: 500;
+        }
+
+        .empty-icon {
+            font-size: 2.25rem;
+            opacity: 0.35;
+        }
+
+        /* Search Box */
+        .search-box {
+            position: relative;
+            margin-bottom: 0.75rem;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 10px 12px 10px 34px;
+            background: #ffffff;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 0.85rem;
+            outline: none;
+            font-weight: 500;
+        }
+
+        .search-box input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-secondary);
+            pointer-events: none;
+            width: 14px;
+            height: 14px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="dashboard">
+        <!-- Brand Header Logo -->
+        <div class="brand-logo-container">
+            <div class="brand-logo-icon">S</div>
+            <div class="brand-name">Sampark<span class="brand-dot">.</span></div>
+        </div>
+
+        <!-- Panel Left: Camera & Scanner -->
+        <div class="panel" id="scanner-panel">
+            <div class="panel-header">
+                <div class="panel-title">
+                    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 013.75 9.375v-4.5zM3.75 14.625c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5a1.125 1.125 0 01-1.125-1.125v-4.5zM13.5 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0113.5 9.375v-4.5z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M17 14v2m-3-3H9.375a1.125 1.125 0 00-1.125 1.125v3.5c0 .621.504 1.125 1.125 1.125h3.5A1.125 1.125 0 0014 19.375V17M17 21h.008v.008H17V21zm3 0h.008v.008H20V21zm-3-3h.008v.008H17V18zm3-3h.008v.008H20V15z"></path>
+                    </svg>
+                    <span>Check-In Station</span>
+                </div>
+                <div class="badge" id="camera-status-badge">Standby</div>
+            </div>
+
+            <!-- Permission Screen -->
+            <div class="setup-screen" id="setup-view">
+                <div class="setup-icon">📷</div>
+                <h3 style="margin-bottom: 0.4rem; font-weight: 800; color: var(--secondary);">Webcam Connection</h3>
+                <p style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 1.5rem; max-width: 320px; font-weight: 500;">
+                    Please enable camera permissions to scan attendee tickets.
+                </p>
+                <button class="btn btn-primary" onclick="initCameraSetup()">
+                    Start Scanning Station
+                </button>
+            </div>
+
+            <!-- Scanner Interface -->
+            <div id="scanner-view" style="display: none; flex-direction: column; flex-grow: 1; justify-content: space-between;">
+                <div class="scanner-container">
+                    <div id="reader"></div>
+                    
+                    <div class="scanner-overlay" id="visual-overlay">
+                        <div class="scan-frame">
+                            <div class="laser"></div>
+                        </div>
+                    </div>
+
+                    <!-- Overlay Success Feedback -->
+                    <div class="feedback-overlay status-success" id="feedback-success">
+                        <div class="feedback-icon-container">
+                            <svg class="checkmark-svg" viewBox="0 0 52 52">
+                                <circle class="checkmark-circle" cx="26" cy="26" r="25"/>
+                                <path class="checkmark-check" d="M14.1 27.2l7.1 7.2 16.7-16.8"/>
+                            </svg>
+                        </div>
+                        <h4 class="feedback-title" id="success-title">Confirmed</h4>
+                        <p class="feedback-desc" id="success-message">Welcome to the event!</p>
+                        <button class="btn btn-outline" style="min-width: 140px;" onclick="resumeScanning()">Next Scan</button>
+                    </div>
+
+                    <!-- Overlay Duplicate Check-in WARNING (Supports Override) -->
+                    <div class="feedback-overlay status-warning" id="feedback-warning">
+                        <div class="feedback-icon-container">⚠️</div>
+                        <h4 class="feedback-title">Already Checked In</h4>
+                        <p class="feedback-desc">This pass was scanned already. Scanning is locked.</p>
+                        
+                        <!-- Scanned Attendee details -->
+                        <div class="attendee-preview-card">
+                            <div class="attendee-preview-label">Registered Guest</div>
+                            <div class="attendee-preview-name" id="dup-name">Jane Doe</div>
+                            <div class="attendee-preview-email" id="dup-email">jane@example.com</div>
+                            <div class="attendee-preview-label" style="margin-top: 8px;">First Entry Time</div>
+                            <div class="attendee-preview-time" id="dup-time">12:34:56 PM</div>
+                        </div>
+
+                        <div style="display: flex; gap: 8px; width: 100%; max-width: 320px;">
+                            <button class="btn btn-outline" style="flex: 1;" onclick="resumeScanning()">Cancel</button>
+                            <button class="btn btn-primary" style="flex: 1.2;" id="override-action-btn">Override Entry</button>
+                        </div>
+                    </div>
+
+                    <!-- Overlay Error Feedback -->
+                    <div class="feedback-overlay status-error" id="feedback-error">
+                        <div class="feedback-icon-container">❌</div>
+                        <h4 class="feedback-title">Invalid Ticket</h4>
+                        <p class="feedback-desc" id="error-message">Ticket record not found in the database.</p>
+                        <button class="btn btn-outline" style="min-width: 140px;" onclick="resumeScanning()">Next Scan</button>
+                    </div>
+                </div>
+
+                <!-- Camera Selector -->
+                <div class="control-group">
+                    <label class="label-text" for="camera-select">Select Camera</label>
+                    <select id="camera-select" onchange="switchCamera(this.value)">
+                        <option value="">Detecting cameras...</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Panel Right: Operator Dashboard / Logs -->
+        <div class="panel">
+            <div class="panel-header">
+                <div class="panel-title">
+                    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.109A2.25 2.25 0 0112.75 21.5h-1.5a2.25 2.25 0 01-2.25-2.263V19.13m-4 0a9.381 9.381 0 012.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M3.75 19.128v-.003c0-1.113.285-2.16.786-3.07M12 18.75a6.002 6.002 0 00-6-6H4.5a6 6 0 00-6 6v.75m18 0v-.75a6 6 0 00-6-6H12a6 6 0 00-6 6v.75m12-9a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zm-3 6a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z"></path>
+                    </svg>
+                    <span>Check-In Logs</span>
+                </div>
+                <div class="badge" id="success-count-badge">Total: 0</div>
+            </div>
+
+            <!-- Search Panel -->
+            <div class="search-box">
+                <svg class="search-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                </svg>
+                <input type="text" id="log-search" placeholder="Search logs..." oninput="filterLogs(this.value)">
+            </div>
+
+            <!-- Logs list -->
+            <div class="history-list" id="logs-container">
+                <div class="empty-state" id="empty-state-view">
+                    <span class="empty-icon">👥</span>
+                    <span>No entry records logged yet.</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let html5QrCode = null;
+        let isScannerRunning = false;
+        let isProcessing = false;
+        let selectedCameraId = "";
+        let checkInLogs = [];
+        let currentScannedId = ""; // Track ID for override flow
+
+        // Load logs from localStorage
+        function loadSavedLogs() {
+            const saved = localStorage.getItem('event_checkin_logs_v2');
+            if (saved) {
+                try {
+                    checkInLogs = JSON.parse(saved);
+                    renderLogs();
+                } catch(e) {
+                    checkInLogs = [];
+                }
+            }
+        }
+
+        // Save log to local storage
+        function saveLogEntry(name, email, status, time) {
+            checkInLogs.unshift({ name, email, status, time });
+            localStorage.setItem('event_checkin_logs_v2', JSON.stringify(checkInLogs));
+            renderLogs();
+        }
+
+        function renderLogs(filterText = "") {
+            const container = document.getElementById('logs-container');
+            const emptyState = document.getElementById('empty-state-view');
+            const successBadge = document.getElementById('success-count-badge');
+            
+            // Clear existing rows
+            const rows = container.querySelectorAll('.history-row');
+            rows.forEach(r => r.remove());
+
+            const query = filterText.toLowerCase().trim();
+            const filtered = checkInLogs.filter(log => 
+                log.name.toLowerCase().includes(query) || 
+                log.email.toLowerCase().includes(query) || 
+                log.status.toLowerCase().includes(query)
+            );
+
+            // Count valid check-ins (both first time and overrides)
+            const confirmedCount = checkInLogs.filter(l => l.status === 'success' || l.status === 'override').length;
+            successBadge.innerText = `Attendees: ${confirmedCount}`;
+
+            if (filtered.length === 0) {
+                emptyState.style.display = 'flex';
+                return;
+            }
+
+            emptyState.style.display = 'none';
+            filtered.forEach(log => {
+                const row = document.createElement('div');
+                row.className = 'history-row';
+
+                let badgeClass = 'status-badge-success';
+                let statusText = 'Confirmed';
+                if (log.status === 'override') {
+                    badgeClass = 'status-badge-override';
+                    statusText = 'Overridden';
+                } else if (log.status === 'duplicate') {
+                    badgeClass = 'status-badge-duplicate';
+                    statusText = 'Duplicate';
+                } else if (log.status === 'invalid') {
+                    badgeClass = 'status-badge-invalid';
+                    statusText = 'Failed';
+                }
+
+                row.innerHTML = `
+                    <div class="history-info">
+                        <div class="history-name">${escapeHtml(log.name)}</div>
+                        <div class="history-email">${escapeHtml(log.email)}</div>
+                    </div>
+                    <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 4px;">
+                        <span class="history-status ${badgeClass}">${statusText}</span>
+                        <span class="history-time">${new Date(log.time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'})}</span>
+                    </div>
+                `;
+                container.appendChild(row);
+            });
+        }
+
+        function filterLogs(val) {
+            renderLogs(val);
+        }
+
+        function escapeHtml(unsafe) {
+            return unsafe
+                 .replace(/&/g, "&amp;")
+                 .replace(/</g, "&lt;")
+                 .replace(/>/g, "&gt;")
+                 .replace(/"/g, "&quot;")
+                 .replace(/'/g, "&#039;");
+        }
+
+        // Camera Initialization
+        async function initCameraSetup() {
+            document.getElementById('setup-view').style.display = 'none';
+            document.getElementById('scanner-view').style.display = 'flex';
+
+            html5QrCode = new Html5Qrcode("reader");
+
+            try {
+                const devices = await Html5Qrcode.getCameras();
+                const selectElement = document.getElementById('camera-select');
+                selectElement.innerHTML = '';
+
+                if (devices && devices.length > 0) {
+                    devices.forEach((device, index) => {
+                        const option = document.createElement('option');
+                        option.value = device.id;
+                        const label = device.label || `Camera ${index + 1}`;
+                        option.text = label;
+                        if (label.toLowerCase().includes('back') || label.toLowerCase().includes('environment')) {
+                            option.selected = true;
+                            selectedCameraId = device.id;
+                        }
+                        selectElement.appendChild(option);
+                    });
+
+                    if (!selectedCameraId) {
+                        selectedCameraId = devices[0].id;
+                    }
+
+                    startScanner(selectedCameraId);
+                } else {
+                    handleInitError("No camera devices detected on this system.");
+                }
+            } catch (err) {
+                console.error("Camera access error:", err);
+                handleInitError("Failed to access camera. Please ensure permissions are granted.");
+            }
+        }
+
+        async function startScanner(cameraId) {
+            if (isScannerRunning) {
+                await stopScanner();
+            }
+
+            const badge = document.getElementById('camera-status-badge');
+            badge.innerText = "Connecting...";
+            badge.style.background = '#fef3c7';
+            badge.style.color = '#d97706';
+            badge.style.borderColor = '#fef3c7';
+
+            const config = {
+                fps: 12,
+                qrbox: function(width, height) {
+                    const minSize = Math.min(width, height);
+                    const scanSize = Math.floor(minSize * 0.65);
+                    return { width: scanSize, height: scanSize };
+                },
+                aspectRatio: 1.0
+            };
+
+            try {
+                await html5QrCode.start(
+                    cameraId, 
+                    config, 
+                    onScanSuccess, 
+                    onScanFailure
+                );
+                
+                isScannerRunning = true;
+                isProcessing = false;
+                document.getElementById('visual-overlay').style.display = 'flex';
+                
+                badge.innerText = "Active";
+                badge.style.background = '#ecfdf5';
+                badge.style.color = '#047857';
+                badge.style.borderColor = '#d1fae5';
+            } catch (err) {
+                console.error("Scanner start error:", err);
+                badge.innerText = "Offline";
+                badge.style.background = '#fef2f2';
+                badge.style.color = '#b91c1c';
+                badge.style.borderColor = '#fee2e2';
+                alert("Could not start camera feed: " + err);
+            }
+        }
+
+        async function stopScanner() {
+            if (html5QrCode && isScannerRunning) {
+                await html5QrCode.stop();
+                isScannerRunning = false;
+            }
+            document.getElementById('visual-overlay').style.display = 'none';
+        }
+
+        async function switchCamera(cameraId) {
+            if (!cameraId) return;
+            selectedCameraId = cameraId;
+            await startScanner(cameraId);
+        }
+
+        function handleInitError(msg) {
+            document.getElementById('setup-view').style.display = 'flex';
+            document.getElementById('scanner-view').style.display = 'none';
+            alert(msg);
+        }
+
+        // Scan Success handler
+        const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+        function onScanSuccess(decodedText, decodedResult) {
+            if (isProcessing) return;
+            isProcessing = true;
+
+            const registrationId = decodedText.trim();
+            currentScannedId = registrationId; // Save for potential override
+
+            if (!UUID_REGEX.test(registrationId)) {
+                showFeedback('error', 'Invalid Format', 'This QR code is not a valid ticket format.');
+                saveLogEntry('Unknown Attendee', 'Invalid barcode contents', 'invalid', new Date());
+                return;
+            }
+
+            document.querySelector('.laser').style.animationPlayState = 'paused';
+
+            // Submit check-in
+            sendCheckInRequest(registrationId, false);
+        }
+
+        function sendCheckInRequest(registrationId, isOverride) {
+            fetch(`/api/checkin/${registrationId}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ override: isOverride })
+            })
+            .then(res => res.json().then(data => ({ status: res.status, body: data })))
+            .then(({ status, body }) => {
+                if (status === 200) {
+                    if (isOverride) {
+                        showFeedback('success', 'Override Complete', `Forced check-in confirmed for ${body.user}.`);
+                        saveLogEntry(body.user, body.email, 'override', new Date());
+                    } else {
+                        showFeedback('success', 'Entry Confirmed', `Welcome, ${body.user}!`);
+                        saveLogEntry(body.user, body.email, 'success', new Date());
+                    }
+                } else if (status === 409) {
+                    // Block scanning, show user info and display override action button
+                    document.getElementById('dup-name').innerText = body.user || 'Unknown Attendee';
+                    document.getElementById('dup-email').innerText = body.email || 'No email registered';
+                    
+                    const timeString = body.time ? new Date(body.time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'}) : 'Previously';
+                    document.getElementById('dup-time').innerText = timeString;
+
+                    // Bind trigger to the override action button
+                    const overrideBtn = document.getElementById('override-action-btn');
+                    overrideBtn.onclick = () => {
+                        // Disable button temporarily to prevent double click
+                        overrideBtn.disabled = true;
+                        overrideBtn.innerText = 'Overriding...';
+                        
+                        sendCheckInRequest(registrationId, true);
+                    };
+                    
+                    overrideBtn.disabled = false;
+                    overrideBtn.innerText = 'Override Entry';
+
+                    showFeedback('warning', 'Already Checked In', 'Locked. Check user info or override.');
+                    saveLogEntry(body.user || 'Duplicate Ticket', `Scanned duplicate ticket`, 'duplicate', new Date());
+                } else {
+                    showFeedback('error', 'Not Registered', body.error || 'Ticket record not found.');
+                    saveLogEntry('Unrecognized Ticket', `Scanned ID: ${registrationId.slice(0, 8)}...`, 'invalid', new Date());
+                }
+            })
+            .catch(err => {
+                alert("Network error communicating with checking services.");
+                resumeScanning();
+            });
+        }
+
+        function onScanFailure(error) {
+            // Quietly ignore scan failures
+        }
+
+        function showFeedback(type, title, desc) {
+            // Hide overlays
+            document.getElementById('feedback-success').style.display = 'none';
+            document.getElementById('feedback-warning').style.display = 'none';
+            document.getElementById('feedback-error').style.display = 'none';
+
+            const overlay = document.getElementById(`feedback-${type}`);
+            if (overlay) {
+                if (type === 'success') {
+                    document.getElementById('success-title').innerText = title;
+                    document.getElementById('success-message').innerText = desc;
+                    
+                    // Reset checkmark animations
+                    const check = document.querySelector('.checkmark-check');
+                    const circle = document.querySelector('.checkmark-circle');
+                    if (check && circle) {
+                        check.style.animation = 'none';
+                        circle.style.animation = 'none';
+                        check.offsetHeight; // force reflow
+                        check.style.animation = null;
+                        circle.style.animation = null;
+                    }
+                } else if (type === 'error') {
+                    document.getElementById('error-message').innerText = desc;
+                }
+                overlay.style.display = 'flex';
+            }
+        }
+
+        function resumeScanning() {
+            // Hide overlays
+            document.getElementById('feedback-success').style.display = 'none';
+            document.getElementById('feedback-warning').style.display = 'none';
+            document.getElementById('feedback-error').style.display = 'none';
+
+            const laser = document.querySelector('.laser');
+            if (laser) {
+                laser.style.animationPlayState = 'running';
+            }
+
+            isProcessing = false;
+        }
+
+        // Initialize state on page load
+        window.addEventListener('DOMContentLoaded', () => {
+            loadSavedLogs();
+        });
+    </script>
+</body>
+</html>
